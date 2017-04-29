@@ -1,6 +1,4 @@
----
-
-**Advanced Lane Finding Project**
+# **Advanced Lane Finding Project**
 
 The goals / steps of this project are the following:
 
@@ -19,15 +17,11 @@ The goals / steps of this project are the following:
 [image2]: ./examples/undistort_test1.jpg "Road Transformed"
 [image3]: ./examples/warped_straight_lines.jpg "Warp Example"
 [image4]: ./examples/edges.png "Binary Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
+[image5]: ./examples/color_fit_lines.png "Fit Visual"
 [image6]: ./examples/example_output.png "Output"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
   
-
-###Writeup / README
-
-#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  
 
 ### Camera Calibration
 
@@ -61,17 +55,17 @@ I used a pair of convolutions to extract lines to generate an image with probabi
 
 ![alt text][image4]
 
-####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
+#### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
 Then I had to rewrite window search method to make it work with sharp turns, and make it more noise robust and fit my lane lines with a 2nd order polynomial kinda like this (see `patches.py`):
 
 ![alt text][image5]
 
-####5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
+#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
 I did this in function `calculate_road_info` in `pipeline.py`
 
-####6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
+#### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
 I implemented this step in my code in `pipeline.py` in the function `draw_marks()`.  Here is an example of my result on a test image:
 
@@ -79,17 +73,17 @@ I implemented this step in my code in `pipeline.py` in the function `draw_marks(
 
 ---
 
-###Pipeline (video)
+### Pipeline (video)
 
-####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
+#### Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
 Here's a [link to my video result](./project_video.mp4)
 
 ---
 
-###Discussion
+### Discussion
 
-#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+#### Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 the biggest and not solved properly issue is curve detection, convolutions worked pretty well, but sliding window approach goes off pretty often.
 so in cases when diamon marking appears nearby sliding window detects it as left turn and one or two frames are spoiled
