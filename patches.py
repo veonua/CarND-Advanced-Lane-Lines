@@ -8,11 +8,11 @@ def rebin(a, shape):
 
 
 def max_pool(a, f):
-    sh = a.shape[0]//f, f, a.shape[1]//f, f
+    sh = a.shape[0] // f, f, a.shape[1] // f, f
     return a.reshape(sh).sum(-1).sum(1)
 
 
-def get_max_ind2(img, level, old_l, old_r, w_l=2, w_r=2):
+def get_max_ind(img, level, old_l, old_r, w_l=2, w_r=2):
     try:
         dy = 1
         zy = img.shape[0] - dy * (level + 1)
@@ -66,11 +66,11 @@ def less_than_threshold(value, level):
     return value < th
 
 
-def find_curves(edges_img, ploty, old_l=None, old_r=None, verbose=0, de2=None):
-    img = rebin(edges_img, (edges_img.shape[0] // 4, edges_img.shape[1] // 4))
+def find_curves2(edges_img, old_l=None, old_r=None, verbose=0, de2=None):
+    downscaled = rebin(edges_img, (edges_img.shape[0] // 4, edges_img.shape[1] // 4))
 
     min_w = 99
-    m = img.shape[1] // 2
+    m = downscaled.shape[1] // 2
 
     if old_l is None:
         window_l = 4
@@ -82,11 +82,10 @@ def find_curves(edges_img, ploty, old_l=None, old_r=None, verbose=0, de2=None):
     else:
         window_r = 3
 
-    lefts, rights = dict(), dict()
     lefty, leftx = [], []
     righty, rightx = [], []
 
-    h = img.shape[0]
+    h = downscaled.shape[0]
 
     # old_l, old_r, = None, None, None  # m - delta_l, m + delta_r, None
     dl, dr = None, None
@@ -100,7 +99,7 @@ def find_curves(edges_img, ploty, old_l=None, old_r=None, verbose=0, de2=None):
         if old_l is None: old_l = m - window_l - 2
         if old_r is None: old_r = m + window_r + 2
         # + dr // 2
-        l, r, lv, rv = get_max_ind2(img, level, old_l, old_r, window_l, window_r)
+        l, r, lv, rv = get_max_ind(downscaled, level, old_l, old_r, window_l, window_r)
 
         if de2 is not None:
             _draw_rect2(de2, old_l, yy, (0, 200, 0), window_l)
@@ -124,7 +123,6 @@ def find_curves(edges_img, ploty, old_l=None, old_r=None, verbose=0, de2=None):
         else:
             lefty.append((h - level) * 4)
             leftx.append(l * 4)
-            lefts[level] = l, lv
             window_l = 2
             if de2 is not None:
                 _draw_rect(de2, l, yy, (0, lv * 5, 0))
@@ -136,7 +134,6 @@ def find_curves(edges_img, ploty, old_l=None, old_r=None, verbose=0, de2=None):
         else:
             righty.append((h - level) * 4)
             rightx.append(r * 4)
-            rights[level] = r, rv
             window_r = 2
             if de2 is not None:
                 _draw_rect(de2, r, yy, (0, 0, lv * 5))
@@ -173,18 +170,27 @@ def find_curves(edges_img, ploty, old_l=None, old_r=None, verbose=0, de2=None):
 
         (old_l, old_r) = (l, r)
 
-    if len(leftx) > 2:
-        left_fit = np.polyfit(lefty, leftx, 2)
+    return leftx, lefty, rightx, righty
+
+
+# def find_curves(edges_img, ploty, old_l=None, old_r=None, verbose=0, de2=None):
+#     leftx, lefty, rightx, righty = find_curves2(edges_img, old_l, old_r, verbose=verbose, de2=de2)
+#
+#     return polyfit(ploty, leftx, lefty, rightx, righty, verbose)
+
+def polyfit(ploty, left_x, left_y, right_x, right_y, verbose=0):
+    if len(left_x) > 2:
+        left_fit = np.polyfit(left_y, left_x, 2)
         if verbose > 2:
-            print (['{:.3f}'.format(i) for i in left_fit])
+            print(['{:.3f}'.format(i) for i in left_fit])
         left_fitx = np.add(left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2], 2)
         ool = left_fitx[-10] // 4
     else:
         left_fitx = None
         ool = None
 
-    if len(rightx) > 2:
-        right_fit = np.polyfit(righty, rightx, 2)
+    if len(right_x) > 2:
+        right_fit = np.polyfit(right_y, right_x, 2)
         if verbose > 2:
             print(['{:.3f}'.format(i) for i in right_fit])
         right_fitx = np.add(right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2], 2)
@@ -193,7 +199,4 @@ def find_curves(edges_img, ploty, old_l=None, old_r=None, verbose=0, de2=None):
         right_fitx = None
         oor = None
 
-    if verbose > 2:
-        print(min_w, ool, oor)
-
-    return left_fitx, right_fitx, img, ool, oor  # rights, lefts
+    return left_fitx, right_fitx, ool, oor

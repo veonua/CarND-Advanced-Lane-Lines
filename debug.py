@@ -1,44 +1,27 @@
 import matplotlib.image as mpimg
-import numpy as np
-
-import pipeline as p
-import patches
+import process
 from moviepy.editor import VideoFileClip
 
-ploty = None
-ool, oor = None, None
 
-image = True
+base = "/home/veon/edu/udacity/CarND-Advanced-Lane-Lines/test_images/"
+# vid1 = [base + "vid1/021.jpg", base + "vid1/025.jpg", base + "vid1/026.jpg"]
+# hard = [base + "vid2/hard009.jpg", base + "vid2/hard016.jpg", base + "vid2/hard017.jpg",
+#         base + "vid2/hard018.jpg", base + "vid2/hard025.jpg", base + "vid2/hard029.jpg",
+#         base + "vid2/hard030.jpg", base + "vid2/hard032.jpg", base + "vid2/hard040.jpg",
+#         base + "vid2/hard046.jpg", base + "vid2/hard050.jpg",
+#         base + "vid3/cachal047.jpg"]
+# tests = [base + "straight_lines1.jpg", base + "test1.jpg", base + "test2.jpg", base + "test3.jpg", base + "test4.jpg",
+#          base + "test5.jpg"]
 
-def process_image(original):
-    global ploty, ool, oor
 
-    dst = p.undistort(original)
-    warped, sure = p.get_birdView(dst)  # np.divide(.astype(float), 255.0)
-    edges = p.get_lines(warped)
-    sm = np.array(edges[-edges.shape[0] // 4:, :])
-
-    if ploty is None:
-        ploty = np.linspace(0, sm.shape[0] - 1, num=sm.shape[0])
-
-    left_fitx, right_fitx, ff, ool, oor = patches.find_curves(sm, ploty, de2=None, verbose= 5 if image else 0)
-
-    if (ool is not None) and (oor is not None) and ((oor - ool > 16) or (oor - ool < 5)):
-        ool, oor = None, None
-
-    if left_fitx is None or right_fitx is None:
-        return dst
-
-    layer = p.fill_lane_lines(np.dstack((edges, edges, edges)).astype('uint8'), np.add(ploty, 300), left_fitx, right_fitx)
-
-    return p.merge_marks(dst, layer)
+image = False
+process._debug = image
 
 if image:
-    o = mpimg.imread("/home/veon/edu/udacity/CarND-Advanced-Lane-Lines/test_images/vid1/226.jpg")
-    process_image(o)
+    o = mpimg.imread(base + "straight_lines1.jpg")
+    process.process_image(o)
 else:
-    clip1 = VideoFileClip("./harder_challenge_video.mp4")
-    video_clip = clip1.fl_image(process_image)
-    video_clip.write_videofile("./harder_challenge_out.mp4", codec='mpeg4', audio=False)
+    clip1 = VideoFileClip("./project_video.mp4")
+    video_clip = clip1.fl_image(process.process_image)
+    video_clip.write_videofile("./project_out.mp4", codec='mpeg4', audio=False)
 
-zzz = 1

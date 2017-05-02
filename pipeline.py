@@ -1,18 +1,8 @@
-from numpy.linalg import inv
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import numpy as np
 import cv2
-
-base = "/home/veon/edu/udacity/CarND-Advanced-Lane-Lines/test_images/"
-vid1 = [base + "vid1/021.jpg", base + "vid1/025.jpg", base + "vid1/026.jpg"]
-hard = [base + "vid2/hard009.jpg", base + "vid2/hard016.jpg", base + "vid2/hard017.jpg",
-        base + "vid2/hard018.jpg", base + "vid2/hard025.jpg", base + "vid2/hard029.jpg",
-        base + "vid2/hard030.jpg", base + "vid2/hard032.jpg", base + "vid2/hard040.jpg",
-        base + "vid2/hard046.jpg", base + "vid2/hard050.jpg",
-        base + "vid3/cachal047.jpg"]
-tests = [base + "straight_lines1.jpg", base + "test1.jpg", base + "test2.jpg", base + "test3.jpg", base + "test4.jpg",
-         base + "test5.jpg"]
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
+import numpy as np
+from numpy.linalg import inv
 
 mtx = np.array([[1156.60, 0.00, 669.05], [0.00, 1151.67, 388.15], [0.00, 0.00, 1.00]])
 dist = np.array([-0.23, -0.12, -0.00, 0.00, 0.16])
@@ -123,23 +113,11 @@ def get_lines(img):
     re1 = cv2.filter2D(hsv[:, :, 2], cv2.CV_32F, ll).clip(0)
     re3 = cv2.filter2D(hsv[:, :, 2], cv2.CV_32F, rl).clip(0)
 
-    return np.divide(np.multiply(re1, re3), 25).astype(img.dtype) # np.minimum(re1, re3).astype(img.dtype)
+    return np.divide(np.multiply(re1, re3), 25).astype(img.dtype)  # np.minimum(re1, re3).astype(img.dtype)
 
 
 def fill_lane_lines(image, fit_y, fit_left_x, fit_right_x):
-    """
-        This utility method highlights correct lane section on the road
-        :param image:
-            On top of this image, my lane will be highlighted
-        :param fit_left_x:
-            X coordinated of the left second order polynomial
-        :param fit_right_x:
-            X coordinated of the right second order polynomial
-        :return:
-            The input image with highlighted lane line.
-        """
     copy_image = np.zeros_like(image)
-    # fit_y = np.add(np.linspace(0, image.shape[0], image.shape[1]), 200)
 
     pts_left = np.array([np.transpose(np.vstack([fit_left_x, fit_y]))])
     pts_right = np.array([np.flipud(np.transpose(np.vstack([fit_right_x, fit_y])))])
@@ -149,16 +127,30 @@ def fill_lane_lines(image, fit_y, fit_left_x, fit_right_x):
 
     return cv2.addWeighted(copy_image, 0.5, image, 1, 0)
 
-def calculate_info():
+
+def calculate_info(leftx, lefty, rightx, righty):
     # Define conversions in x and y from pixels space to meters
-    ym_per_pix = 30 / 720  # meters per pixel in y dimension
-    xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
+    ym_per_pix = 3.048 / 16  # meters per pixel in y dimension
+    xm_per_pix = 3.7 / 56    # meters per pixel in x dimension
+
+    y_eval = 100
 
     # Fit new polynomials to x,y in world space
-    left_fit_cr = np.polyfit(ploty * ym_per_pix, leftx * xm_per_pix, 2)
-    right_fit_cr = np.polyfit(ploty * ym_per_pix, rightx * xm_per_pix, 2)
+    left_fit_cr = np.polyfit(np.multiply(lefty, ym_per_pix), np.multiply(leftx, xm_per_pix), 2)
+    right_fit_cr = np.polyfit(np.multiply(righty, ym_per_pix), np.multiply(rightx, xm_per_pix), 2)
     # Calculate the new radii of curvature
     left_curverad = ((1 + (2 * left_fit_cr[0] * y_eval * ym_per_pix + left_fit_cr[1]) ** 2) ** 1.5) / np.absolute(
         2 * left_fit_cr[0])
     right_curverad = ((1 + (2 * right_fit_cr[0] * y_eval * ym_per_pix + right_fit_cr[1]) ** 2) ** 1.5) / np.absolute(
         2 * right_fit_cr[0])
+
+    # Next, we can lane deviation
+    base_x_left_m = left_fit_cr[0] * (y_eval * ym_per_pix) ** 2 \
+                    + left_fit_cr[1] * (y_eval * ym_per_pix) + left_fit_cr[2]
+    base_x_right_m = right_fit_cr[0] * (y_eval * ym_per_pix) ** 2 \
+                     + right_fit_cr[1] * (y_eval * ym_per_pix) + right_fit_cr[2]
+    line_center = (base_x_right_m + base_x_left_m) / 2
+    image_center = xm_per_pix * wR / 2
+    offset_m = line_center - image_center
+
+    return left_curverad, right_curverad, offset_m
